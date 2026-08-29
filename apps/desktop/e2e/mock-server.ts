@@ -537,10 +537,20 @@ export function startMockServer(options: MockServerOptions = {}): Promise<MockSe
           }
 
           if (includesBlockingClarifyTrigger(parsed.messages)) {
-            if (stream) {
-              streamScriptedTurn(res, model, BLOCKING_CLARIFY_TURN)
+            const respond = () => {
+              if (stream) {
+                streamScriptedTurn(res, model, BLOCKING_CLARIFY_TURN)
+              } else {
+                nonStreamingScriptedTurn(res, model, BLOCKING_CLARIFY_TURN)
+              }
+            }
+
+            if (holdThisCompletion) {
+              heldCompletionCount++
+              resolveHeldStreamStarted?.()
+              void heldStreamReleased.then(respond)
             } else {
-              nonStreamingScriptedTurn(res, model, BLOCKING_CLARIFY_TURN)
+              respond()
             }
             return
           }

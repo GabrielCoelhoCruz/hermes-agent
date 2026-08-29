@@ -7,7 +7,7 @@ import { $gateway } from './gateway'
 import { withinNativeNotifyBaseline } from './notify-baseline'
 import { clearApprovalRequest } from './prompts'
 import { $activeSessionId } from './session'
-import { requestForOwnedSession } from './session-states'
+import { $focusedRuntimeId, requestForOwnedSession } from './session-states'
 
 export type { HermesOpenTarget }
 
@@ -139,8 +139,12 @@ function shouldFire(kind: NativeNotificationKind, sessionId?: null | string, glo
   }
 
   // Attention kinds break through for an off-screen session even while focused.
+  // "Off-screen" follows the pane the user is actually looking at, not the
+  // route-primary runtime: a primary chat can sit hidden behind a focused tile.
   if (ATTENTION_KINDS.has(kind)) {
-    return isBackgrounded() || (Boolean(sessionId) && sessionId !== $activeSessionId.get())
+    const focusedSessionId = $focusedRuntimeId.get() ?? $activeSessionId.get()
+
+    return isBackgrounded() || (Boolean(sessionId) && sessionId !== focusedSessionId)
   }
 
   // Completion kinds: only the active session, only while away — so a busy
