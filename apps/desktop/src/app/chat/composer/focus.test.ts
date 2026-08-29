@@ -4,6 +4,7 @@ import { $hoveredTreeGroup } from '@/components/pane-shell/tree/store'
 
 import {
   blurComposerInput,
+  focusComposerInput,
   getActiveComposer,
   markActiveComposer,
   onComposerFocusRequest,
@@ -73,6 +74,18 @@ describe('blurComposerInput', () => {
     blurComposerInput()
 
     expect(document.activeElement).toBe(outside)
+  })
+})
+
+describe('focusComposerInput', () => {
+  it('never lets a hidden keep-alive composer steal focus from the visible one', () => {
+    const background = mountInput(true)
+    const foreground = mountInput()
+
+    foreground.focus()
+    focusComposerInput(background)
+
+    expect(document.activeElement).toBe(foreground)
   })
 })
 

@@ -10,7 +10,7 @@
  * steal focus from the composer effect.
  */
 
-import { queryAllVisible, queryVisible } from '@/components/pane-shell/pane-visibility'
+import { isElementInHiddenPane, queryAllVisible, queryVisible } from '@/components/pane-shell/pane-visibility'
 import { $hoveredTreeGroup } from '@/components/pane-shell/tree/store'
 
 import type { InlineRefInput } from './inline-refs'
@@ -389,15 +389,17 @@ export const onComposerModelMenuRequest = (handler: (target: ComposerTarget) => 
  *   - 0ms:  browser focus reclaim from a click target inside an external panel
  */
 export const focusComposerInput = (el: HTMLElement | null) => {
-  if (!el) {
+  if (!el || isElementInHiddenPane(el)) {
     return
   }
 
   // Skip when already focused: focus() runs the full focusing steps (forcing
   // layout) even on the active element, and during a session switch the DOM is
   // large and dirty — the redundant retries were measurably expensive there.
+  // Re-check pane visibility on every retry: the target may be visible for the
+  // sync call, then become an inactive keep-alive tab before rAF/0ms runs.
   const focus = () => {
-    if (document.activeElement !== el) {
+    if (!isElementInHiddenPane(el) && document.activeElement !== el) {
       el.focus({ preventScroll: true })
     }
   }
